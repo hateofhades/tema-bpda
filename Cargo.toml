@@ -1,0 +1,24 @@
+[package]
+name = "tema-1"
+version = "0.0.0"
+edition = "2021"
+publish = false
+authors = ["you"]
+
+[lib]
+path = "src/tema_1.rs"
+
+[dependencies.multiversx-sc]
+version = "0.62.1"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.62.1"
+
+[workspace]
+members = [
+    ".",
+    "meta",
+]
