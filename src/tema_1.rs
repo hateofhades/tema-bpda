@@ -42,6 +42,15 @@ pub trait Tema1 {
         amount: &BigUint,
     );
 
+    #[event("football_slot_canceled")]
+    fn football_slot_canceled_event(
+        &self,
+        #[indexed] initiator: &ManagedAddress,
+        #[indexed] start: u64,
+        #[indexed] end: u64,
+        amount: &BigUint,
+    );
+
     // --- Functions ---
 
     #[only_owner]
@@ -101,6 +110,31 @@ pub trait Tema1 {
         self.reserved_slot().set(Some(slot));
         self.participants().insert(caller.clone());
         self.football_slot_created_event(&caller, start, end, &payment);
+    }
+
+    #[payable("EGLD")]
+    #[endpoint(cancelFootballSlot)]
+    fn cancel_football_slot(&self) {
+        let slot_option = self.reserved_slot().get();
+        require!(slot_option.is_some(), "No football slot to cancel");
+
+        let slot = slot_option.unwrap();
+        let caller = self.blockchain().get_caller();
+
+        require!(
+            caller == slot.payer,
+            "Only the slot creator can cancel the football slot"
+        );
+
+        // Refund the participants
+        for participant in self.participants().iter() {
+            self.send().direct_egld(&participant, &slot.amount);
+        }
+
+        // Clear the slot and participants
+        self.reserved_slot().set(None);
+        self.participants().clear();
+        self.football_slot_canceled_event(&caller, slot.start, slot.end, &slot.amount);
     }
 
     // --- Storage Mappers ---
