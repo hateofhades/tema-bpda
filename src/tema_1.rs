@@ -182,9 +182,25 @@ pub trait Tema1 {
 
         require!(!slot.confirmed, "Football slot is already confirmed");
 
-        // Refund the participants
-        for participant in self.participants().iter() {
-            self.send().direct_egld(&participant, &slot.amount);
+        let now = self.blockchain().get_block_timestamp();
+        let time_before_start = if slot.start > now {
+            slot.start - now
+        } else {
+            0
+        };
+
+        let refund_amount = if time_before_start < 60 * 60 {
+            BigUint::zero()
+        } else if time_before_start >= 12 * 60 * 60 && time_before_start < 24 * 60 * 60 {
+            slot.amount.clone() / 2u32
+        } else {
+            slot.amount.clone()
+        };
+
+        if refund_amount > BigUint::zero() {
+            for participant in self.participants().iter() {
+                self.send().direct_egld(&participant, &refund_amount);
+            }
         }
 
         // Clear the slot and participants
