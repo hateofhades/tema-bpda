@@ -6,6 +6,7 @@ CHAIN_ID="D"
 
 # Wallet configuration
 WALLET_PEM="./wallet.pem"
+WALLETS_DIR="./wallets"
 
 # Contract configuration
 WASM_PATH="../output/tema-1.wasm"

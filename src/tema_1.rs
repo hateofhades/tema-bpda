@@ -33,6 +33,15 @@ pub trait Tema1 {
         amount: &BigUint,
     );
 
+    #[event("participate_to_football")]
+    fn participate_to_football_event(
+        &self,
+        #[indexed] participant: &ManagedAddress,
+        #[indexed] slot_start: u64,
+        #[indexed] slot_end: u64,
+        amount: &BigUint,
+    );
+
     // --- Functions ---
 
     #[only_owner]
@@ -42,23 +51,45 @@ pub trait Tema1 {
     }
 
     #[payable("EGLD")]
+    #[endpoint(participateToFootballSlot)]
+    fn participate_to_football_slot(&self) {
+        // Ensure there is a reserved slot
+        let slot = self
+            .reserved_slot()
+            .get()
+            .expect("No football slot is currently reserved");
+
+        let caller = self.blockchain().get_caller();
+        let payment = self.call_value().egld().clone();
+
+        require!(
+            !self.participants().contains(&caller),
+            "You have already participated in this slot"
+        );
+
+        require!(payment == slot.amount, "Payment must equal the slot amount");
+
+        // Register the participant
+        self.participants().insert(caller.clone());
+        self.participate_to_football_event(&caller, slot.start, slot.end, &payment);
+    }
+
+    #[payable("EGLD")]
     #[endpoint(createFootballSlot)]
     fn create_football_slot(&self, start: u64, end: u64) {
-        // Ensure no session already exists
         require!(
             self.reserved_slot().get().is_none(),
             "A football slot already exists"
         );
 
-        // Get the payment amount and caller
         let payment = self.call_value().egld().clone();
         let caller = self.blockchain().get_caller();
 
-        // Get the required deposit (court cost)
+        // Get the required deposit
         let court_cost = self.football_court_cost().get();
         require!(payment == court_cost, "Payment must equal the court cost");
 
-        // Create the new slot
+        // Create the slot and store it and the caller as participant
         let slot = Slot {
             start,
             end,
@@ -67,13 +98,8 @@ pub trait Tema1 {
             confirmed: false,
         };
 
-        // Store the slot
         self.reserved_slot().set(Some(slot));
-
-        // Register the caller as the first participant
         self.participants().insert(caller.clone());
-
-        // Emit event for the new session
         self.football_slot_created_event(&caller, start, end, &payment);
     }
 
