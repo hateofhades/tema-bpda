@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            8
+// Endpoints:                            9
 // Async Callback (empty):               1
-// Total number of exported functions:  11
+// Total number of exported functions:  12
 
 #![no_std]
 
@@ -20,6 +20,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
+        setFootballFieldManager => set_football_field_manager
         setFootballCourtCost => set_football_court_cost
         participateToFootballSlot => participate_to_football_slot
         createFootballSlot => create_football_slot

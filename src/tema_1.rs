@@ -24,6 +24,12 @@ pub trait Tema1 {
 
     // --- Events ---
 
+    #[event("set_football_court_cost")]
+    fn set_football_court_cost_event(&self, #[indexed] cost: &BigUint);
+
+    #[event("set_football_field_manager")]
+    fn set_football_field_manager_event(&self, #[indexed] manager: &ManagedAddress);
+
     #[event("football_slot_created")]
     fn football_slot_created_event(
         &self,
@@ -54,9 +60,17 @@ pub trait Tema1 {
     // --- Functions ---
 
     #[only_owner]
+    #[endpoint(setFootballFieldManager)]
+    fn set_football_field_manager(&self, manager: ManagedAddress) {
+        self.football_field_manager_address().set(manager.clone());
+        self.set_football_field_manager_event(&manager);
+    }
+
+    #[only_owner]
     #[endpoint(setFootballCourtCost)]
     fn set_football_court_cost(&self, cost: BigUint) {
-        self.football_court_cost().set(cost);
+        self.football_court_cost().set(cost.clone());
+        self.set_football_court_cost_event(&cost);
     }
 
     #[payable("EGLD")]
