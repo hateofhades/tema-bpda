@@ -57,6 +57,15 @@ pub trait Tema1 {
         amount: &BigUint,
     );
 
+    #[event("football_slot_confirmed")]
+    fn football_slot_confirmed_event(
+        &self,
+        #[indexed] initiator: &ManagedAddress,
+        #[indexed] start: u64,
+        #[indexed] end: u64,
+        amount: &BigUint,
+    );
+
     // --- Functions ---
 
     #[only_owner]
@@ -71,6 +80,35 @@ pub trait Tema1 {
     fn set_football_court_cost(&self, cost: BigUint) {
         self.football_court_cost().set(cost.clone());
         self.set_football_court_cost_event(&cost);
+    }
+
+    #[endpoint(confirmSlot)]
+    fn confirm_slot(&self) {
+        let slot_option = self.reserved_slot().get();
+        require!(slot_option.is_some(), "No football slot to confirm");
+
+        let slot = slot_option.unwrap();
+        let caller = self.blockchain().get_caller();
+
+        require!(
+            caller == self.football_field_manager_address().get()
+                || caller == self.blockchain().get_owner_address(),
+            "Only the football field manager or owner can confirm the slot"
+        );
+
+        require!(!slot.confirmed, "Football slot is already confirmed");
+
+        // Mark the slot as confirmed
+        let confirmed_slot = Slot {
+            start: slot.start,
+            end: slot.end,
+            payer: slot.payer.clone(),
+            amount: slot.amount.clone(),
+            confirmed: true,
+        };
+
+        self.reserved_slot().set(Some(confirmed_slot));
+        self.football_slot_confirmed_event(&caller, slot.start, slot.end, &slot.amount);
     }
 
     #[payable("EGLD")]
@@ -126,7 +164,6 @@ pub trait Tema1 {
         self.football_slot_created_event(&caller, start, end, &payment);
     }
 
-    #[payable("EGLD")]
     #[endpoint(cancelFootballSlot)]
     fn cancel_football_slot(&self) {
         let slot_option = self.reserved_slot().get();
@@ -139,6 +176,8 @@ pub trait Tema1 {
             caller == slot.payer,
             "Only the slot creator can cancel the football slot"
         );
+
+        require!(!slot.confirmed, "Football slot is already confirmed");
 
         // Refund the participants
         for participant in self.participants().iter() {
