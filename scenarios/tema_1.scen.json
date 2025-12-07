@@ -1,25 +1,48 @@
 {
-    "name": "empty",
+    "name": "Football Slot Management - Complete Test Suite",
+    "comment": "Comprehensive test suite covering all functionalities and edge cases",
     "steps": [
         {
             "step": "setState",
+            "comment": "Initialize test environment with owner, manager, and multiple users",
             "accounts": {
                 "address:owner": {
                     "nonce": "1",
-                    "balance": "0"
+                    "balance": "10,000,000,000,000,000,000,000"
+                },
+                "address:manager": {
+                    "nonce": "0",
+                    "balance": "1,000,000,000,000,000,000,000"
+                },
+                "address:user1": {
+                    "nonce": "0",
+                    "balance": "10,000,000,000,000,000,000,000"
+                },
+                "address:user2": {
+                    "nonce": "0",
+                    "balance": "10,000,000,000,000,000,000,000"
+                },
+                "address:user3": {
+                    "nonce": "0",
+                    "balance": "10,000,000,000,000,000,000,000"
+                },
+                "address:unauthorized": {
+                    "nonce": "0",
+                    "balance": "10,000,000,000,000,000,000,000"
                 }
             },
             "newAddresses": [
                 {
                     "creatorAddress": "address:owner",
                     "creatorNonce": "1",
-                    "newAddress": "sc:empty"
+                    "newAddress": "sc:tema1"
                 }
             ]
         },
         {
             "step": "scDeploy",
             "id": "deploy",
+            "comment": "Deploy the football slot management contract",
             "tx": {
                 "from": "address:owner",
                 "contractCode": "mxsc:../output/tema-1.mxsc.json",
@@ -30,9 +53,532 @@
             "expect": {
                 "out": [],
                 "status": "",
-                "logs": [],
+                "logs": "*",
                 "gas": "*",
                 "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "set-manager-by-owner",
+            "comment": "TEST 1: Owner sets football field manager",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:tema1",
+                "function": "setFootballFieldManager",
+                "arguments": [
+                    "address:manager"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "logs": "*",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "set-manager-unauthorized-fail",
+            "comment": "TEST 2: Non-owner cannot set manager (should fail)",
+            "tx": {
+                "from": "address:unauthorized",
+                "to": "sc:tema1",
+                "function": "setFootballFieldManager",
+                "arguments": [
+                    "address:unauthorized"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:Endpoint can only be called by owner",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "set-cost-by-owner",
+            "comment": "TEST 3: Owner sets football court cost to 100 EGLD",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:tema1",
+                "function": "setFootballCourtCost",
+                "arguments": [
+                    "100,000,000,000,000,000,000"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "logs": "*",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "set-cost-unauthorized-fail",
+            "comment": "TEST 4: Non-owner cannot set cost (should fail)",
+            "tx": {
+                "from": "address:user1",
+                "to": "sc:tema1",
+                "function": "setFootballCourtCost",
+                "arguments": [
+                    "50,000,000,000,000,000,000"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:Endpoint can only be called by owner",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scQuery",
+            "id": "query-manager",
+            "comment": "TEST 5: Query manager address",
+            "tx": {
+                "to": "sc:tema1",
+                "function": "getFootballFieldManager",
+                "arguments": []
+            },
+            "expect": {
+                "out": [
+                    "address:manager"
+                ],
+                "status": ""
+            }
+        },
+        {
+            "step": "scQuery",
+            "id": "query-cost",
+            "comment": "TEST 6: Query court cost",
+            "tx": {
+                "to": "sc:tema1",
+                "function": "getFootballCourtCost",
+                "arguments": []
+            },
+            "expect": {
+                "out": [
+                    "100,000,000,000,000,000,000"
+                ],
+                "status": ""
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "create-slot-wrong-payment-fail",
+            "comment": "TEST 7: Create slot with wrong payment amount (should fail)",
+            "tx": {
+                "from": "address:user1",
+                "to": "sc:tema1",
+                "egldValue": "50,000,000,000,000,000,000",
+                "function": "createFootballSlot",
+                "arguments": [
+                    "1000000",
+                    "1003600"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:Payment must equal the court cost",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "create-slot-success",
+            "comment": "TEST 8: Create football slot with correct payment",
+            "tx": {
+                "from": "address:user1",
+                "to": "sc:tema1",
+                "egldValue": "100,000,000,000,000,000,000",
+                "function": "createFootballSlot",
+                "arguments": [
+                    "1000000",
+                    "1003600"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "logs": "*",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "create-slot-already-exists-fail",
+            "comment": "TEST 9: Cannot create another slot when one exists (should fail)",
+            "tx": {
+                "from": "address:user2",
+                "to": "sc:tema1",
+                "egldValue": "100,000,000,000,000,000,000",
+                "function": "createFootballSlot",
+                "arguments": [
+                    "2000000",
+                    "2003600"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:A football slot already exists",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "participate-wrong-payment-fail",
+            "comment": "TEST 10: Participate with wrong payment amount (should fail)",
+            "tx": {
+                "from": "address:user2",
+                "to": "sc:tema1",
+                "egldValue": "50,000,000,000,000,000,000",
+                "function": "participateToFootballSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:Payment must equal the slot amount",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "participate-user2-success",
+            "comment": "TEST 11: User2 participates with correct payment",
+            "tx": {
+                "from": "address:user2",
+                "to": "sc:tema1",
+                "egldValue": "100,000,000,000,000,000,000",
+                "function": "participateToFootballSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "logs": "*",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "participate-user3-success",
+            "comment": "TEST 12: User3 participates with correct payment",
+            "tx": {
+                "from": "address:user3",
+                "to": "sc:tema1",
+                "egldValue": "100,000,000,000,000,000,000",
+                "function": "participateToFootballSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "logs": "*",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "participate-duplicate-fail",
+            "comment": "TEST 13: User2 cannot participate twice (should fail)",
+            "tx": {
+                "from": "address:user2",
+                "to": "sc:tema1",
+                "egldValue": "100,000,000,000,000,000,000",
+                "function": "participateToFootballSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:You have already participated in this slot",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "confirm-unauthorized-fail",
+            "comment": "TEST 14: Unauthorized user cannot confirm slot (should fail)",
+            "tx": {
+                "from": "address:unauthorized",
+                "to": "sc:tema1",
+                "function": "confirmSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:Only the football field manager or owner can confirm the slot",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "confirm-by-manager-success",
+            "comment": "TEST 15: Manager confirms the slot",
+            "tx": {
+                "from": "address:manager",
+                "to": "sc:tema1",
+                "function": "confirmSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "logs": "*",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "confirm-already-confirmed-fail",
+            "comment": "TEST 16: Cannot confirm already confirmed slot (should fail)",
+            "tx": {
+                "from": "address:manager",
+                "to": "sc:tema1",
+                "function": "confirmSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:Football slot is already confirmed",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "cancel-confirmed-slot-fail",
+            "comment": "TEST 17: Cannot cancel confirmed slot (should fail)",
+            "tx": {
+                "from": "address:user1",
+                "to": "sc:tema1",
+                "function": "cancelFootballSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:Football slot is already confirmed",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "pay-court-unauthorized-fail",
+            "comment": "TEST 18: Non-creator cannot pay for court (should fail)",
+            "tx": {
+                "from": "address:user2",
+                "to": "sc:tema1",
+                "function": "payCourt",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:Only the slot creator can pay for the football court",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "comment": "TEST 19: Check manager balance before payment",
+            "accounts": {
+                "address:manager": {
+                    "nonce": "*",
+                    "balance": "1,000,000,000,000,000,000,000"
+                }
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "pay-court-success",
+            "comment": "TEST 20: Creator pays for the court (3 participants * 100 EGLD)",
+            "tx": {
+                "from": "address:user1",
+                "to": "sc:tema1",
+                "function": "payCourt",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "logs": "*",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "comment": "TEST 21: Verify manager received payment (1000 + 300 = 1300 EGLD)",
+            "accounts": {
+                "address:manager": {
+                    "nonce": "*",
+                    "balance": "1,300,000,000,000,000,000,000"
+                }
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "create-slot-for-cancel-test",
+            "comment": "TEST 22: Create new slot to test cancellation with full refund",
+            "tx": {
+                "from": "address:user1",
+                "to": "sc:tema1",
+                "egldValue": "100,000,000,000,000,000,000",
+                "function": "createFootballSlot",
+                "arguments": [
+                    "90000",
+                    "93600"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "participate-for-cancel-test",
+            "comment": "TEST 23: User2 participates in the slot",
+            "tx": {
+                "from": "address:user2",
+                "to": "sc:tema1",
+                "egldValue": "100,000,000,000,000,000,000",
+                "function": "participateToFootballSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "cancel-by-non-creator-fail",
+            "comment": "TEST 24: Non-creator cannot cancel slot (should fail)",
+            "tx": {
+                "from": "address:user2",
+                "to": "sc:tema1",
+                "function": "cancelFootballSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "4",
+                "message": "str:Only the slot creator can cancel the football slot",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "comment": "TEST 25: Check balances before cancellation",
+            "accounts": {
+                "address:user1": {
+                    "balance": "9,800,000,000,000,000,000,000"
+                },
+                "address:user2": {
+                    "balance": "9,800,000,000,000,000,000,000"
+                }
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "cancel-slot-full-refund",
+            "comment": "TEST 26: Cancel slot (full refund - >24h before start)",
+            "tx": {
+                "from": "address:user1",
+                "to": "sc:tema1",
+                "function": "cancelFootballSlot",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "logs": "*",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "comment": "TEST 27: Verify full refund (both users get 100 EGLD back)",
+            "accounts": {
+                "address:user1": {
+                    "balance": "9,900,000,000,000,000,000,000"
+                },
+                "address:user2": {
+                    "balance": "9,900,000,000,000,000,000,000"
+                }
             }
         }
     ]
