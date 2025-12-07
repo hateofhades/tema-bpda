@@ -1,7 +1,17 @@
 #![no_std]
 
-#[allow(unused_imports)]
 use multiversx_sc::imports::*;
+use multiversx_sc::proxy_imports::*;
+
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
+#[type_abi]
+pub struct Slot<M: ManagedTypeApi> {
+    pub start: u64,
+    pub end: u64,
+    pub payer: ManagedAddress<M>,
+    pub amount: BigUint<M>,
+    pub confirmed: bool,
+}
 
 /// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
@@ -11,4 +21,25 @@ pub trait Tema1 {
 
     #[upgrade]
     fn upgrade(&self) {}
+
+    // --- Storage Mappers ---
+
+    // Address of the manager of the football field
+    #[view(getFootballFieldManager)]
+    #[storage_mapper("football_field_manager_address")]
+    fn football_field_manager_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    // Cost per court / slot
+    #[view(getFootballCourtCost)]
+    #[storage_mapper("football_court_cost")]
+    fn football_court_cost(&self) -> SingleValueMapper<BigUint>;
+
+    // List of participants (addresses)
+    #[view(getParticipants)]
+    #[storage_mapper("participants")]
+    fn participants(&self) -> UnorderedSetMapper<ManagedAddress>;
+
+    #[view(getReservedSlot)]
+    #[storage_mapper("reserved_slot")]
+    fn reserved_slot(&self) -> SingleValueMapper<Option<Slot<Self::Api>>>;
 }
