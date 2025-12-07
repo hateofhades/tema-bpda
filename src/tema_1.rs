@@ -66,6 +66,9 @@ pub trait Tema1 {
         amount: &BigUint,
     );
 
+    #[event("pay_court")]
+    fn pay_court_event(&self, #[indexed] manager: &ManagedAddress, amount: &BigUint);
+
     // --- Functions ---
 
     #[only_owner]
@@ -188,6 +191,41 @@ pub trait Tema1 {
         self.reserved_slot().set(None);
         self.participants().clear();
         self.football_slot_canceled_event(&caller, slot.start, slot.end, &slot.amount);
+    }
+
+    #[endpoint(payCourt)]
+    fn pay_court(&self) {
+        let slot_option = self.reserved_slot().get();
+        require!(slot_option.is_some(), "No football slot to pay for");
+
+        let slot = slot_option.unwrap();
+        let caller = self.blockchain().get_caller();
+
+        require!(
+            caller == slot.payer,
+            "Only the slot creator can pay for the football court"
+        );
+
+        require!(slot.confirmed, "Football slot is not yet confirmed");
+        require!(
+            self.football_field_manager_address().get() != ManagedAddress::zero(),
+            "Football field manager is not set"
+        );
+        require!(
+            self.football_court_cost().get() > BigUint::zero(),
+            "Football court cost is not set"
+        );
+
+        // Pay the football field manager
+        let total_amount =
+            self.football_court_cost().get() * BigUint::from(self.participants().len());
+        self.send()
+            .direct_egld(&self.football_field_manager_address().get(), &total_amount);
+        self.pay_court_event(&caller, &total_amount);
+
+        // Clear the slot and participants
+        self.reserved_slot().set(None);
+        self.participants().clear();
     }
 
     // --- Storage Mappers ---
